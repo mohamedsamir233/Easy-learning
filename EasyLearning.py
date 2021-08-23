@@ -1,27 +1,56 @@
 from PyQt5 import QtCore , Qt , uic , QtCore , uic
-from PyQt5.QtWidgets import QMessageBox , QMainWindow , QLineEdit , QApplication
+from PyQt5.QtWidgets import QMessageBox , QMainWindow , QLineEdit , QApplication , QFileDialog
 from PyQt5.QtCore import  *
 from PyQt5.QtGui import * 
 import sys
 from PyQt5 import QtTest
 import mysql.connector
-import re
-w = 550
-h = 501
+import re , time
+from splash import Ui_MainWindow
+w,h = 550,501
 
 db = mysql.connector.connect (
     host = "localhost" ,
     user = "root" ,
     password = "12345678" ,
-    database = "easydb"
-)
+    database = "easydb" )
 
 mycursor = db.cursor ()
 
-class main(QMainWindow):
+class splash_screen (QMainWindow,Ui_MainWindow) :
+    def __init__ (self) :
+        super (splash_screen,self).__init__()
+        self.setupUi (self)
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.show ()
+        QtTest.QTest.qWait (1500)
+        for i in range (101) :
+            QtTest.QTest.qWait (20)
+            self.progressBar.setValue (i)
+            if i == 25 :
+                self.label_2.setText ("Welcome To Easy Learning") 
+            if i == 50 :
+                self.label_2.setText ("loading database") 
+            if i == 75 :
+                self.label_2.setText("loading User Interface")
+        self.hide ()
+        self.window = login ()
+        self.window.show ()
+
+    def mousePressEvent(self, event):
+        self.oldPos = event.globalPos() 
+
+    def mouseMoveEvent(self, event ):
+       delta = QPoint (event.globalPos() - self.oldPos)
+       self.move(self.x() + delta.x(), self.y() + delta.y())
+       self.oldPos = event.globalPos() 
+
+
+class login(QMainWindow):
 
     def __init__(self):
-        super(main, self).__init__()
+        super(login, self).__init__()
         uic.loadUi("first.ui", self)
         self.UI()
         self.Buttons()
@@ -53,7 +82,6 @@ class main(QMainWindow):
         self.pushButton.clicked.connect (self.login)
     
     def password_check(self,passwd):
-
         SpecialSym =['$', '@', '#', '%']
         val = True
         if len(passwd) < 6:
@@ -105,7 +133,8 @@ class main(QMainWindow):
                     QMessageBox.information (self,"Login" , "Login successfull")
                     #هنا هنحط الكود اللي بيودي ل صفحه البرنامج Easy learning 
                     self.hide ()
-                    import E2
+                    self.window = translate ()
+                    self.window.show ()
                     
             except Exception as err :
                 QMessageBox.critical(self,'Login ','There is a problem in login')
@@ -161,7 +190,6 @@ class main(QMainWindow):
         else :
            QMessageBox.critical(self, "Register ", "The data must be entered correctly  ")
 
-
     def exit (self) :
         self.close ()
         
@@ -192,9 +220,37 @@ class main(QMainWindow):
        self.move(self.x() + delta.x(), self.y() + delta.y())
        self.oldPos = event.globalPos() 
 
+class translate (QMainWindow): 
+	def __init__(self):
+	  super(translate, self).__init__()
+	  uic.loadUi ('second.ui',self)
+	#  self.setupUi(self)
+	  self.Buttons ()
+	  self.UI ()
+	  self.showMaximized ()
+
+	def Buttons (self): 
+		self.pushButton.clicked.connect (self.Browse)
+		self.actionupload.triggered.connect(self.upload)
+		self.actionbrowse.triggered.connect (self.Browse)
+		self.actionexit.triggered.connect (self.close)
+
+	def UI(self) :
+		self.setWindowTitle ("Easy Learning")
+		self.resize (w,h)
+		self.setWindowIcon (QIcon("bin/upload.png"))
+
+	def Browse (self) : 
+		path = QFileDialog.getOpenFileName(self,("Select Video"), r"C:/Users/Hackers/Desktop", "Video Files (*.mp4 *.mov *.wmv *.FLV *.MKV *.AVI)")
+		self.lineEdit.setText (path [0])
+		print (path)
+
+	def upload (self):
+		print ("upload")
+
 
 
 
 app = QApplication(sys.argv)
-login  = main()
+window  = splash_screen()
 app.exec_()
